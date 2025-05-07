@@ -12,7 +12,8 @@ dependencies = [
     "google-auth-httplib2 (>=0.2.0,<0.3.0)",
     "google-auth-oauthlib (>=1.2.2,<2.0.0)",
     "tox (>=4.25.0,<5.0.0)",
-    "black (>=25.1.0,<26.0.0)"
+    "black (>=25.1.0,<26.0.0)",
+    "google-cloud-pubsub (>=2.29.0,<3.0.0)"
 ]
 
 [tool.poetry]
