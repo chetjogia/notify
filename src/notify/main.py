@@ -1,52 +1,30 @@
-import os.path
-
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-
-# If modifying these scopes, delete the file token.json.
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+import base64
+from typing import Union
 
 
-def main():
-  """Shows basic usage of the Gmail API.
-  Lists the user's Gmail labels.
-  """
-  creds = None
-  # The file token.json stores the user's access and refresh tokens, and is
-  # created automatically when the authorization flow completes for the first
-  # time.
-  if os.path.exists("token.json"):
-    creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-  # If there are no (valid) credentials available, let the user log in.
-  if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-      creds.refresh(Request())
+from fastapi import FastAPI, Request
+
+from routes import gmail_pub_sub_endpoint
+
+app = FastAPI()
+
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+
+@app.post("/notify")
+async def handle_push(request: Request):
+    body = await request.json()
+
+    message = body.get("message")
+    if message and "data" in message:
+        data = base64.b64decode(message["data"]).decode("utf-8")
+        print("Received message:", data)
     else:
-      flow = InstalledAppFlow.from_client_secrets_file(
-          "credentials.json", SCOPES
-      )
-      creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
-    with open("token.json", "w") as token:
-      token.write(creds.to_json())
+        print("Invalid message format:", body)
 
-  try:
-    service = build("gmail", "v1", credentials=creds)
+    # Must return 200 to acknowledge the message
+    return {"status": "OK"}
 
-    request = {
-      'labelIds': ['INBOX'],
-      'topicName': 'projects/notify-459020/topics/notify-emails',
-      'labelFilterBehavior': 'INCLUDE'
-    }
-    response = service.users().watch(userId='me', body=request).execute()
-    print(response)
-  except HttpError as error:
-    # TODO(developer) - Handle errors from gmail API.
-    print(f"An error occurred: {error}")
-
-
-if __name__ == "__main__":
-  main()
+app.include_router(gmail_pub_sub_endpoint.router)

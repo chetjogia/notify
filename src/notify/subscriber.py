@@ -4,7 +4,7 @@ import json
 from google.oauth2 import service_account
 
 project_id = "notify-459020"
-subscription_id = "notify-emails-sub"
+subscription_id = "notify-sub-push"
 credentials = service_account.Credentials.from_service_account_file("service-account.json")
 
 subscriber = pubsub_v1.SubscriberClient(credentials=credentials)
